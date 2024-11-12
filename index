@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas e Média</title>
+    <!-- Incluir SheetJS via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+</head>
+<script>
+var av1, av2, trabalho, media;
+
+av1 = parseFloat(prompt("Qual foi a nota da AV1?"));
+av2 = parseFloat(prompt("Qual foi a nota da AV2?"));
+trabalho = parseFloat(prompt("Qual foi a nota de trabalho?"));
+
+function roundUpToNextHalf(num) {
+    if (num % 1 !== 0) {  
+        return Math.ceil(num * 2) / 2;  
+    }
+    return num;  
+}
+
+media = (av1 + trabalho + av2) / 3;
+media = roundUpToNextHalf(media); // Aplica o arredondamento apenas quando necessário
+
+// Função para gerar e baixar o arquivo Excel
+function exportToExcel() {
+    // Criando uma nova planilha
+    var wb = XLSX.utils.book_new();
+    var ws_data = [
+        ["Trimestre", "Nota AV1", "Nota AV2", "Nota Trabalho", "Média"],
+        ["1º Trimestre", av1, av2, trabalho, media],
+        ["2º Trimestre", av1, av2, trabalho, media],
+        ["3º Trimestre", av1, av2, trabalho, media]
+    ];
+
+    var ws = XLSX.utils.aoa_to_sheet(ws_data); // Cria a planilha a partir do array
+    XLSX.utils.book_append_sheet(wb, ws, "Notas"); // Adiciona a planilha ao arquivo Excel
+
+    // Faz o download do arquivo Excel
+    XLSX.writeFile(wb, "notas.xlsx");
+}
+
+document.write("Média: " + media + ". A média foi calculada com sucesso.<br>");
+document.write('<button onclick="exportToExcel()">Baixar Planilha</button>'); // Cria um botão para exportar
+
+</script>
+<body>
+</body>
+</html>
