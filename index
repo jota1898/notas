@@ -4,48 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notas e Média</title>
-    <!-- Incluir SheetJS via CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
 </head>
 <script>
 var av1, av2, trabalho, media;
 
-av1 = parseFloat(prompt("Qual foi a nota da AV1?"));
-av2 = parseFloat(prompt("Qual foi a nota da AV2?"));
-trabalho = parseFloat(prompt("Qual foi a nota de trabalho?"));
-
+// Função para arredondar para o próximo múltiplo de 0,5
 function roundUpToNextHalf(num) {
-    if (num % 1 !== 0) {  
-        return Math.ceil(num * 2) / 2;  
+    if (num % 1 !== 0) {
+        return Math.ceil(num * 2) / 2;
     }
-    return num;  
+    return num;
 }
 
-media = (av1 + trabalho + av2) / 3;
-media = roundUpToNextHalf(media); // Aplica o arredondamento apenas quando necessário
+// Função para enviar dados para a planilha do Google Sheets
+function sendDataToGoogleSheets() {
+    var sheetId = "1pRJT2Ln1Y9jJmywqd175ElHZLYN0GMqeLjbQYv3wgu0"; // Substitua pela ID da sua planilha
+    var apiKey = "AIzaSyAHmXysnVud1xvbZ_stWpy-Irb7jSXQ6XM"; // Substitua pela chave da sua API
 
-// Função para gerar e baixar o arquivo Excel
-function exportToExcel() {
-    // Criando uma nova planilha
-    var wb = XLSX.utils.book_new();
-    var ws_data = [
-        ["Trimestre", "Nota AV1", "Nota AV2", "Nota Trabalho", "Média"],
-        ["1º Trimestre", av1, av2, trabalho, media],
-        ["2º Trimestre", av1, av2, trabalho, media],
-        ["3º Trimestre", av1, av2, trabalho, media]
-    ];
+    // Carregar a API do Google Sheets
+    gapi.load('client', initClient);
 
-    var ws = XLSX.utils.aoa_to_sheet(ws_data); // Cria a planilha a partir do array
-    XLSX.utils.book_append_sheet(wb, ws, "Notas"); // Adiciona a planilha ao arquivo Excel
+    function initClient() {
+        gapi.client.init({
+            apiKey: apiKey,
+            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+        }).then(function() {
+            // Enviar as notas para a planilha
+            var params = {
+                spreadsheetId: sheetId,
+                range: "Notas!A1:E1",  // Defina o intervalo da planilha onde os dados serão salvos
+                valueInputOption: "RAW",
+            };
 
-    // Faz o download do arquivo Excel
-    XLSX.writeFile(wb, "notas.xlsx");
+            // Dados a serem enviados
+            var values = [
+                ["1º Trimestre", av1, av2, trabalho, media]  // Dados da linha
+            ];
+
+            var body = {
+                values: values
+            };
+
+            // Fazer o update na planilha
+            var request = gapi.client.sheets.spreadsheets.values.append(params, body);
+            request.then(function(response) {
+                console.log("Dados enviados com sucesso", response);
+                alert("Notas enviadas para a planilha com sucesso!");
+            }, function(error) {
+                console.error("Erro ao enviar dados", error);
+            });
+        });
+    }
 }
 
-document.write("Média: " + media + ". A média foi calculada com sucesso.<br>");
-document.write('<button onclick="exportToExcel()">Baixar Planilha</button>'); // Cria um botão para exportar
+// Função para coletar as notas e calcular a média
+function salvarNotas() {
+    av1 = parseFloat(prompt("Qual foi a nota da AV1?"));
+    av2 = parseFloat(prompt("Qual foi a nota da AV2?"));
+    trabalho = parseFloat(prompt("Qual foi a nota de trabalho?"));
 
+    media = (av1 + trabalho + av2) / 3;
+    media = roundUpToNextHalf(media);
+
+    // Exibe as informações e envia para a planilha
+    document.write("Média: " + media + ". A média foi calculada com sucesso.<br>");
+    document.write('<button onclick="sendDataToGoogleSheets()">Enviar para a Planilha</button>');
+}
 </script>
 <body>
+    <h1>Calculadora de Notas</h1>
+    <button onclick="salvarNotas()">Inserir Notas</button>
 </body>
 </html>
